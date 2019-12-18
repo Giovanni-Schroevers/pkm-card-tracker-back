@@ -7,9 +7,7 @@
 - Create a database
 - Copy the `.env.example` and rename it to `.env`
 - Edit the `.env` to match your settings
-- Run `cd system`
 - Run `py manage.py migrate` to migrate your database
-- Run `py manage.py createsuperuser` to create a user
 - Run `py manage.py runserver` to start the dev server
 
 Troubleshooting:
