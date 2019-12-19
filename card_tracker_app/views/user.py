@@ -54,11 +54,10 @@ def update(request, pk):
 
     data = request.data
 
-    user_validate = UserSerializer(data=data)
+    user_validate = UserSerializer(user, data=data, partial=True)
     user_validate.is_valid(raise_exception=True)
 
-    user.update(user_validate.data)
-    user.save()
+    user_validate.update(instance=user, validated_data=user_validate.data)
 
     return Response(status=status.HTTP_204_NO_CONTENT)
 

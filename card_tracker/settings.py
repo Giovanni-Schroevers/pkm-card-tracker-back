@@ -14,6 +14,8 @@ DEBUG = int(os.getenv("SERVER_DEBUG"))
 
 ALLOWED_HOSTS = []
 
+# SECURITY WARNING: Change to whitelist when running in production
+CORS_ORIGIN_ALLOW_ALL = True
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -24,7 +26,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'card_tracker_app.apps.CardTrackerAppConfig',
     'rest_framework',
-    'rest_framework.authtoken'
+    'rest_framework.authtoken',
+    'corsheaders'
 ]
 
 REST_FRAMEWORK = {
@@ -37,6 +40,7 @@ REST_FRAMEWORK = {
 }
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',

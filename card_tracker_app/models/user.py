@@ -16,4 +16,4 @@ class User(AbstractBaseUser):
     def update(self, data):
         self.name = data['name']
         self.email = data['email']
-        self.is_admin = ['data.is_admin']
+        self.is_admin = data['is_admin']

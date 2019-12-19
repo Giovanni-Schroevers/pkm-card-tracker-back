@@ -28,7 +28,7 @@ def login(request):
     login_validate.is_valid(raise_exception=True)
 
     try:
-        user = User.objects.get(name=data['name'])
+        user = User.objects.get(name__iexact=data['name'])
     except User.DoesNotExist:
         raise exceptions.AuthenticationFailed("Wrong login credentials")
 
