@@ -10,6 +10,7 @@ from rest_framework.authtoken.models import Token
 
 from card_tracker_app.models import User
 from card_tracker_app.serializers.authentication import LoginSerializer, ResetPasswordSerializer
+from card_tracker_app.serializers.user import UserLoginSerializer
 
 
 @api_view(['POST'])
@@ -36,7 +37,10 @@ def login(request):
 
     token, _ = Token.objects.get_or_create(user=user)
 
-    return Response({'token': token.key}, status=status.HTTP_200_OK)
+    data = UserLoginSerializer(user).data
+    data['token'] = token.key
+
+    return Response(data, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])

@@ -1,7 +1,8 @@
-from rest_framework import status
+from rest_framework import status, exceptions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 
+from card_tracker_app.models import User
 from card_tracker_app.permissions import IsAdmin
 from card_tracker_app.serializers.user import UserSerializer, PasswordSerializer
 
@@ -10,7 +11,7 @@ from card_tracker_app.serializers.user import UserSerializer, PasswordSerializer
 @permission_classes((IsAdmin,))
 def create(request):
     if not request.data:
-        return Response({'detail': 'Missing body'}, status=status.HTTP_400_BAD_REQUEST)
+        raise exceptions.ParseError('Missing body')
 
     data = request.data
     user_validate = UserSerializer(data=data)
@@ -26,7 +27,7 @@ def create(request):
 @api_view(['PATCH'])
 def change_password(request):
     if not request.data:
-        return Response({'detail': 'Missing body'}, status=status.HTTP_400_BAD_REQUEST)
+        raise exceptions.ParseError('Missing body')
 
     data = request.data
     user = request.user
@@ -38,3 +39,29 @@ def change_password(request):
     user.save()
 
     return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['PATCH'])
+@permission_classes((IsAdmin,))
+def update(request, pk):
+    if not request.data:
+        raise exceptions.ParseError('Missing body')
+
+    try:
+        user = User.objects.get(id=pk)
+    except User.DoesNotExist:
+        raise exceptions.NotFound(f"User with id '{pk}' does not exist")
+
+    data = request.data
+
+    user_validate = UserSerializer(data=data)
+    user_validate.is_valid(raise_exception=True)
+
+    user.update(user_validate.data)
+    user.save()
+
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+
+
