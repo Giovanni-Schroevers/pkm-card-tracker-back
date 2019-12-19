@@ -22,7 +22,7 @@ def login(request):
     If it's a match, a token is created and the matched User is returned
     """
     if not request.data:
-        return Response({'detail': 'Email and password required'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'detail': 'Name and password required'}, status=status.HTTP_400_BAD_REQUEST)
     data = request.data
     login_validate = LoginSerializer(data=data)
     login_validate.is_valid(raise_exception=True)
