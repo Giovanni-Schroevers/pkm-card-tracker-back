@@ -12,8 +12,3 @@ class User(AbstractBaseUser):
 
     def __str__(self):
         return self.name
-
-    def update(self, data):
-        self.name = data['name']
-        self.email = data['email']
-        self.is_admin = data['is_admin']
