@@ -11,4 +11,5 @@ urlpatterns = [
     path('user/<int:pk>/update/', update),
     path('user/change-password/', change_password),
     path('set/create/', create_set),
+    path('set/<int:set_id>/<int:card_number>/', action)
 ]

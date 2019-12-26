@@ -2,8 +2,9 @@ from rest_framework import status, exceptions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 
-from card_tracker_app.models import User
+from card_tracker_app.models import User, Set, Card, Action
 from card_tracker_app.permissions import IsAdmin
+from card_tracker_app.serializers.action import ActionSerializer
 from card_tracker_app.serializers.user import UserSerializer, PasswordSerializer
 
 
@@ -62,5 +63,44 @@ def update(request, pk):
     return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+@api_view(['PUT'])
+def action(request, set_id, card_number):
+    if not request.data:
+        raise exceptions.ParseError('Missing body')
 
+    try:
+        pkm_set = Set.objects.get(id=set_id)
+    except Set.DoesNotExist:
+        raise exceptions.NotFound(f"Set with id '{set_id}' does not exist")
 
+    try:
+        card = Card.objects.get(set=set_id, number=card_number)
+    except Card.DoesNotExist:
+        raise exceptions.NotFound(f"Card '{card_number}' does not exist in set '{pkm_set.name}'")
+
+    if 'action' not in request.data:
+        raise exceptions.ParseError('Missing parameter action')
+
+    user = request.user
+    action_type = request.data['action']
+
+    action_data = {'user': user.id, 'set': pkm_set.id, 'card': card.id}
+
+    if action_type == 'add':
+        action_data['action'] = 0
+    elif action_type == 'loan':
+        total_cards = Action.objects.filter(card=card.id, action=0)
+        loaned_cards = Action.objects.filter(card=card.id, action=1)
+
+        if len(total_cards) > len(loaned_cards):
+            action_data['action'] = 1
+        else:
+            return Response({'detail': 'There are no cards to be loaned'}, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        raise exceptions.ParseError(f"{action_type} is not a valid action")
+
+    action_validate = ActionSerializer(data=action_data)
+    action_validate.is_valid(raise_exception=True)
+    action_validate.save()
+
+    return Response(status=status.HTTP_204_NO_CONTENT)
