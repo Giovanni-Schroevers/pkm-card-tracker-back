@@ -13,3 +13,14 @@ class CardSerializer(serializers.ModelSerializer):
             'number',
             'set'
         )
+
+
+class CardInSetSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Card
+        fields = (
+            'id',
+            'name',
+            'number',
+        )
