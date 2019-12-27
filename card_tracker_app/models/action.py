@@ -15,7 +15,6 @@ class Action(models.Model):
     action = enum.EnumField(ActionTypes, default=ActionTypes.ADD)
     created_at = models.DateTimeField(default=now, editable=False)
     user = models.ForeignKey(User, models.CASCADE, 'user_action')
-    set = models.ForeignKey(Set, models.CASCADE, 'set_action')
     card = models.ForeignKey(Card, models.CASCADE, 'card_action')
 
     def __str__(self):
