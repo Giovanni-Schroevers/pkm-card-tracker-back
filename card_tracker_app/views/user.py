@@ -60,7 +60,3 @@ def update(request, pk):
     user_validate.update(instance=user, validated_data=user_validate.data)
 
     return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-
-
