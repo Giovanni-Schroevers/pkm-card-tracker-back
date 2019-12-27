@@ -132,3 +132,31 @@ def card_detail(request, pk):
     except Card.DoesNotExist:
         raise exceptions.NotFound(f"Card with id'{pk}' not found")
 
+    add_actions = Action.objects.filter(action=0, card=card.id)
+    loan_actions = Action.objects.filter(action=1, card=card.id)
+
+    data = CardSerializer(card).data
+
+    additions = []
+    loans = []
+
+    for add_action in add_actions:
+        index = next((index for (index, d) in enumerate(additions) if d['name'] == add_action.user.name), None)
+        if not type(index) is int:
+            additions.append({'name': add_action.user.name, 'amount': 1})
+        else:
+            additions[index]['amount'] += 1
+
+    for loan_action in loan_actions:
+        index = next((index for (index, d) in enumerate(loans) if d['name'] == loan_action.user.name), None)
+        if not type(index) is int:
+            loans.append({'name': loan_action.user.name, 'amount': 1})
+        else:
+            loans[index]['amount'] += 1
+
+    data['set'] = Set.objects.get(pk=data['set']).name
+    data['additions'] = additions
+    data['loans'] = loans
+
+    return Response(data, status=status.HTTP_200_OK)
+
