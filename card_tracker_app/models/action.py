@@ -8,6 +8,7 @@ from . import Set, Card, User
 class ActionTypes(enum.Enum):
     ADD = 0
     LOAN = 1
+    REMOVE = 2
 
 
 class Action(models.Model):

@@ -11,5 +11,4 @@ class SetSerializer(serializers.ModelSerializer):
             'id',
             'code',
             'name',
-            'series'
         )

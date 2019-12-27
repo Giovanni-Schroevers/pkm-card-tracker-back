@@ -2,7 +2,7 @@ from rest_framework import status, exceptions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 
-from card_tracker_app.models import Series, Action, Set, Card
+from card_tracker_app.models import Action, Set, Card
 from card_tracker_app.permissions import IsAdmin
 from card_tracker_app.serializers.action import ActionSerializer
 from card_tracker_app.serializers.card import CardSerializer, CardInSetSerializer
@@ -14,8 +14,6 @@ def set_overview(request):
     sets = SetSerializer(Set.objects.all(), many=True).data
 
     for pkm_set in sets:
-        pkm_set['series'] = Series.objects.get(pk=pkm_set['series']).name
-
         cards = Card.objects.filter(card_action__action=0).distinct()
         pkm_set['owned_cards'] = len(cards)
 
@@ -47,12 +45,6 @@ def create(request):
         raise exceptions.ParseError('Missing body')
 
     data = request.data
-
-    if 'series' not in data:
-        raise exceptions.ParseError('Missing property series')
-
-    series = Series.objects.get_or_create(name=data['series'])
-    data['series'] = series[0].id
 
     set_validate = SetSerializer(data=data)
     set_validate.is_valid(raise_exception=True)
@@ -92,10 +84,6 @@ def action(request, set_id, card_number):
 
     if action_type == 'add':
         action_data['action'] = 0
-
-        action_validate = ActionSerializer(data=action_data)
-        action_validate.is_valid(raise_exception=True)
-        action_validate.save()
     elif action_type == 'loan':
         total_cards = Action.objects.filter(card=card.id, action=0)
         loaned_cards = Action.objects.filter(card=card.id, action=1)
@@ -104,10 +92,6 @@ def action(request, set_id, card_number):
             action_data['action'] = 1
         else:
             return Response({'detail': 'There are no cards to be loaned'}, status=status.HTTP_400_BAD_REQUEST)
-
-        action_validate = ActionSerializer(data=action_data)
-        action_validate.is_valid(raise_exception=True)
-        action_validate.save()
     elif action_type == 'remove':
         actions = Action.objects.filter(action=0, user=request.user.id, card=card.id).order_by('created_at')
 
@@ -119,8 +103,13 @@ def action(request, set_id, card_number):
         else:
             return Response({'detail': 'You can not remove cards that were not added by yourself / are not in the '
                                        'collection'}, status=status.HTTP_400_BAD_REQUEST)
+        action_data['action'] = 2
     else:
         raise exceptions.ParseError(f"{action_type} is not a valid action")
+
+    action_validate = ActionSerializer(data=action_data)
+    action_validate.is_valid(raise_exception=True)
+    action_validate.save()
 
     return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -132,31 +121,18 @@ def card_detail(request, pk):
     except Card.DoesNotExist:
         raise exceptions.NotFound(f"Card with id'{pk}' not found")
 
-    add_actions = Action.objects.filter(action=0, card=card.id)
-    loan_actions = Action.objects.filter(action=1, card=card.id)
-
     data = CardSerializer(card).data
 
-    additions = []
-    loans = []
+    actions = Action.objects.filter(card=card.id)
+    action_data = []
 
-    for add_action in add_actions:
-        index = next((index for (index, d) in enumerate(additions) if d['name'] == add_action.user.name), None)
-        if not type(index) is int:
-            additions.append({'name': add_action.user.name, 'amount': 1})
-        else:
-            additions[index]['amount'] += 1
+    for pkm_action in actions:
+        action_data.append(
+            {'name': pkm_action.user.name, 'action': pkm_action.action.name, 'timestamp': pkm_action.created_at}
+        )
 
-    for loan_action in loan_actions:
-        index = next((index for (index, d) in enumerate(loans) if d['name'] == loan_action.user.name), None)
-        if not type(index) is int:
-            loans.append({'name': loan_action.user.name, 'amount': 1})
-        else:
-            loans[index]['amount'] += 1
-
+    data['actions'] = action_data
     data['set'] = Set.objects.get(pk=data['set']).name
-    data['additions'] = additions
-    data['loans'] = loans
 
     return Response(data, status=status.HTTP_200_OK)
 
