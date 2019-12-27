@@ -11,6 +11,5 @@ class ActionSerializer(serializers.ModelSerializer):
             'id',
             'action',
             'user',
-            'set',
             'card'
         )
