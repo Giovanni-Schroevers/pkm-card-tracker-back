@@ -80,7 +80,7 @@ def action(request, set_id, card_number):
     user = request.user
     action_type = request.data['action']
 
-    action_data = {'user': user.id, 'set': pkm_set.id, 'card': card.id}
+    action_data = {'user': user.id, 'card': card.id}
 
     if action_type == 'add':
         action_data['action'] = 0
