@@ -3,6 +3,7 @@
 # Edit at https://www.gitignore.io/?templates=python,dotenv,django,pycharm,visualstudio
 
 ### Django ###
+*/static
 *.log
 *.pot
 *.pyc
