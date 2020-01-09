@@ -121,7 +121,7 @@ def action(request, set_id, card_number):
         else:
             return Response({'detail': 'You can not return cards that were not loaned by yourself / are not being  '
                                        'loaned'}, status=status.HTTP_400_BAD_REQUEST)
-        action_data['action'] = 3
+        action_data['action'] = 2
     elif action_type == 'remove':
         actions = Action.objects.filter(action=0, user=request.user.id, card=card.id).order_by('created_at')
 
