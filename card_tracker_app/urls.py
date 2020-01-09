@@ -13,6 +13,7 @@ urlpatterns = [
     path('set/', set_overview),
     path('set/create/', create_set),
     path('set/<int:pk>/', set_detail),
+    path('set/<str:name>/', set_detail_by_name),
     path('set/<int:set_id>/<int:card_number>/', action),
     path('card/<int:pk>/', card_detail)
 ]

@@ -14,7 +14,7 @@ def set_overview(request):
     sets = SetSerializer(Set.objects.all(), many=True).data
 
     for pkm_set in sets:
-        cards = Card.objects.filter(card_action__action=0).distinct()
+        cards = Card.objects.filter(card_action__action=0, id=pkm_set['id']).distinct()
         pkm_set['owned_cards'] = len(cards)
 
     return Response(sets, status=status.HTTP_200_OK)
@@ -26,6 +26,24 @@ def set_detail(request, pk):
         pkm_set = Set.objects.get(pk=pk)
     except Set.DoesNotExist:
         raise exceptions.NotFound(f"Set with id '{pk}' does not exist")
+
+    cards = CardInSetSerializer(Card.objects.filter(set=pkm_set.id), many=True).data
+
+    for card in cards:
+        card['total_cards'] = len(Action.objects.filter(card=card['id'], action=0))
+
+    data = SetSerializer(pkm_set).data
+    data['cards'] = cards
+
+    return Response(data, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+def set_detail_by_name(request, name):
+    try:
+        pkm_set = Set.objects.get(name__iexact=name)
+    except Set.DoesNotExist:
+        raise exceptions.NotFound(f"Set with name '{name}' does not exist")
 
     cards = CardInSetSerializer(Card.objects.filter(set=pkm_set.id), many=True).data
 
@@ -92,6 +110,18 @@ def action(request, set_id, card_number):
             action_data['action'] = 1
         else:
             return Response({'detail': 'There are no cards to be loaned'}, status=status.HTTP_400_BAD_REQUEST)
+    elif action_type == 'return':
+        actions = Action.objects.filter(action=1, user=request.user.id, card=card.id).order_by('created_at')
+
+        if len(actions) == 0:
+            actions = Action.objects.filter(action=1, card=card.id).order_by('created_at')
+
+        if len(actions) > 0:
+            Action.delete(actions.last())
+        else:
+            return Response({'detail': 'You can not return cards that were not loaned by yourself / are not being  '
+                                       'loaned'}, status=status.HTTP_400_BAD_REQUEST)
+        action_data['action'] = 3
     elif action_type == 'remove':
         actions = Action.objects.filter(action=0, user=request.user.id, card=card.id).order_by('created_at')
 
@@ -103,7 +133,7 @@ def action(request, set_id, card_number):
         else:
             return Response({'detail': 'You can not remove cards that were not added by yourself / are not in the '
                                        'collection'}, status=status.HTTP_400_BAD_REQUEST)
-        action_data['action'] = 2
+        action_data['action'] = 3
     else:
         raise exceptions.ParseError(f"{action_type} is not a valid action")
 
