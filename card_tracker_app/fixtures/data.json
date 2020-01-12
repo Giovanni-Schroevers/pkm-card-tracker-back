@@ -1,0 +1,12 @@
+[
+  {
+    "model": "card_tracker_app.user",
+    "pk": 1,
+    "fields": {
+      "name": "admin",
+      "email": "admin@admin.com",
+      "password": "pbkdf2_sha256$150000$JyfSwTDNV4va$DGtOM5nigkUB+oEiiY312KUI9ILJGLJdYHj+QmuIj80=",
+      "is_admin": true
+    }
+  }
+]

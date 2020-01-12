@@ -8,6 +8,7 @@
 - Copy the `.env.example` and rename it to `.env`
 - Edit the `.env` to match your settings
 - Run `py manage.py migrate` to migrate your database
+- Run `py manage.py loaddata data` to seed your database
 - Run `py manage.py runserver` to start the dev server
 
 Troubleshooting:
