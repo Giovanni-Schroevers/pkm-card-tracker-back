@@ -16,8 +16,12 @@ def set_overview(request):
     sets = SetSerializer(Set.objects.all(), many=True).data
 
     for pkm_set in sets:
-        cards = Card.objects.filter(~Q(rarity='Rare Secret'), card_card_owned__is_loan=False, set=pkm_set['id']).distinct()
+        cards = Card.objects.filter(~Q(rarity='Rare Secret'), card_card_owned__is_loan=False,
+                                    set=pkm_set['id']).distinct()
+        cards_sr = Card.objects.filter(card_card_owned__is_loan=False,
+                                    set=pkm_set['id']).distinct()
         pkm_set['owned_cards'] = len(cards)
+        pkm_set['owned_cards_sr'] = len(cards_sr)
 
     return Response(sets, status=status.HTTP_200_OK)
 
