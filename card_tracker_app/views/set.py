@@ -3,10 +3,11 @@ from rest_framework import status, exceptions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 
-from card_tracker_app.models import Action, Set, Card
+from card_tracker_app.models import Action, Set, Card, CardOwned
 from card_tracker_app.permissions import IsAdmin
 from card_tracker_app.serializers.action import ActionSerializer
 from card_tracker_app.serializers.card import CardSerializer, CardInSetSerializer
+from card_tracker_app.serializers.card_owned import CardOwnedSerializer
 from card_tracker_app.serializers.set import SetSerializer
 
 
@@ -15,7 +16,7 @@ def set_overview(request):
     sets = SetSerializer(Set.objects.all(), many=True).data
 
     for pkm_set in sets:
-        cards = Card.objects.filter(~Q(rarity='Rare Secret'), card_action__action=0, id=pkm_set['id']).distinct()
+        cards = Card.objects.filter(~Q(rarity='Rare Secret'), card_card_owned__is_loan=False, set=pkm_set['id']).distinct()
         pkm_set['owned_cards'] = len(cards)
 
     return Response(sets, status=status.HTTP_200_OK)
@@ -26,12 +27,12 @@ def set_detail(request, pk):
     try:
         pkm_set = Set.objects.get(pk=pk)
     except Set.DoesNotExist:
-        raise exceptions.NotFound(f"Set with id '{pk}' does not exist")
+        raise exceptions.NotFound(f"Set with name '{pk}' does not exist")
 
     cards = CardInSetSerializer(Card.objects.filter(set=pkm_set.id), many=True).data
 
     for card in cards:
-        card['total_cards'] = len(Action.objects.filter(card=card['id'], action=0))
+        card['total_cards'] = len(CardOwned.objects.filter(card=card['id'], is_loan=False))
 
     data = SetSerializer(pkm_set).data
     data['cards'] = cards
@@ -49,7 +50,7 @@ def set_detail_by_name(request, name):
     cards = CardInSetSerializer(Card.objects.filter(set=pkm_set.id), many=True).data
 
     for card in cards:
-        card['total_cards'] = len(Action.objects.filter(card=card['id'], action=0))
+        card['total_cards'] = len(CardOwned.objects.filter(card=card['id'], is_loan=False))
 
     data = SetSerializer(pkm_set).data
     data['cards'] = cards
@@ -102,35 +103,41 @@ def action(request, set_id, card_number):
     action_data = {'user': user.id, 'card': card.id}
 
     if action_type == 'add':
+        card_owned = CardOwnedSerializer(data=action_data)
+        card_owned.is_valid()
+        card_owned.save()
+
         action_data['action'] = 0
     elif action_type == 'loan':
-        total_cards = Action.objects.filter(card=card.id, action=0)
-        loaned_cards = Action.objects.filter(card=card.id, action=1)
+        total_cards = CardOwned.objects.filter(card=card.id, is_loan=False)
+        loaned_cards = CardOwned.objects.filter(card=card.id, is_loan=True)
 
         if len(total_cards) > len(loaned_cards):
             action_data['action'] = 1
+
+            card_owned = CardOwnedSerializer(data={'user': user.id, 'card': card.id, 'is_loan': True})
+            card_owned.is_valid()
+            card_owned.save()
         else:
             return Response({'detail': 'There are no cards to be loaned'}, status=status.HTTP_400_BAD_REQUEST)
     elif action_type == 'return':
-        actions = Action.objects.filter(action=1, user=request.user.id, card=card.id).order_by('created_at')
+        loans = CardOwned.objects.filter(user=request.user.id, card=card.id, is_loan=True)
 
-        if len(actions) == 0:
-            actions = Action.objects.filter(action=1, card=card.id).order_by('created_at')
+        if len(loans) == 0:
+            return Response({'detail': 'You can not return cards that were not loaned by yourself'},
+                            status=status.HTTP_400_BAD_REQUEST)
 
-        if len(actions) > 0:
-            Action.delete(actions.last())
-        else:
-            return Response({'detail': 'You can not return cards that were not loaned by yourself / are not being  '
-                                       'loaned'}, status=status.HTTP_400_BAD_REQUEST)
+        CardOwned.delete(loans.last())
+
         action_data['action'] = 2
     elif action_type == 'remove':
-        actions = Action.objects.filter(action=0, user=request.user.id, card=card.id).order_by('created_at')
+        cards = CardOwned.objects.filter(user=request.user.id, card=card.id, is_loan=False)
 
-        if len(actions) == 0:
-            actions = Action.objects.filter(action=0, card=card.id).order_by('created_at')
+        if len(cards) == 0:
+            cards = CardOwned.objects.filter(card=card.id, is_loan=False)
 
-        if len(actions) > 0:
-            Action.delete(actions.last())
+        if len(cards) > 0:
+            CardOwned.delete(cards.last())
         else:
             return Response({'detail': 'You can not remove cards that were not added by yourself / are not in the '
                                        'collection'}, status=status.HTTP_400_BAD_REQUEST)
@@ -154,6 +161,26 @@ def card_detail(request, pk):
 
     data = CardSerializer(card).data
 
+    owned_cards = CardOwned.objects.filter(card=card.id, is_loan=False)
+    loaned_cards = CardOwned.objects.filter(card=card.id, is_loan=True)
+
+    additions = []
+    loans = []
+
+    for add_action in owned_cards:
+        index = next((index for (index, d) in enumerate(additions) if d['name'] == add_action.user.name), None)
+        if not type(index) is int:
+            additions.append({'name': add_action.user.name, 'amount': 1})
+        else:
+            additions[index]['amount'] += 1
+
+    for loan_action in loaned_cards:
+        index = next((index for (index, d) in enumerate(loans) if d['name'] == loan_action.user.name), None)
+        if not type(index) is int:
+            loans.append({'name': loan_action.user.name, 'amount': 1})
+        else:
+            loans[index]['amount'] += 1
+
     actions = Action.objects.filter(card=card.id)
     action_data = []
 
@@ -164,6 +191,7 @@ def card_detail(request, pk):
 
     data['actions'] = action_data
     data['set'] = Set.objects.get(pk=data['set']).name
+    data['additions'] = additions
+    data['loans'] = loans
 
     return Response(data, status=status.HTTP_200_OK)
-
