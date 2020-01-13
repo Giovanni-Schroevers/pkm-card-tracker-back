@@ -1,3 +1,4 @@
+from django.db.models import Q
 from rest_framework import status, exceptions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -14,7 +15,7 @@ def set_overview(request):
     sets = SetSerializer(Set.objects.all(), many=True).data
 
     for pkm_set in sets:
-        cards = Card.objects.filter(card_action__action=0, id=pkm_set['id']).distinct()
+        cards = Card.objects.filter(~Q(rarity='Rare Secret'), card_action__action=0, id=pkm_set['id']).distinct()
         pkm_set['owned_cards'] = len(cards)
 
     return Response(sets, status=status.HTTP_200_OK)

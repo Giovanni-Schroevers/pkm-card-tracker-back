@@ -11,7 +11,8 @@ class CardSerializer(serializers.ModelSerializer):
             'id',
             'name',
             'number',
-            'set'
+            'set',
+            'rarity'
         )
 
 
@@ -23,4 +24,5 @@ class CardInSetSerializer(serializers.ModelSerializer):
             'id',
             'name',
             'number',
+            'rarity',
         )
