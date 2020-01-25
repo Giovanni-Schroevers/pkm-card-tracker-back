@@ -16,10 +16,10 @@ def set_overview(request):
     sets = SetSerializer(Set.objects.all(), many=True).data
 
     for pkm_set in sets:
-        cards = Card.objects.filter(~Q(rarity='Rare Secret'), card_card_owned__is_loan=False,
-                                    set=pkm_set['id']).distinct()
+        cards = Card.objects.filter(~Q(rarity='Rare Secret'), ~Q(rarity='Rare Rainbow'),
+                                    card_card_owned__is_loan=False, set=pkm_set['id']).distinct()
         cards_sr = Card.objects.filter(card_card_owned__is_loan=False,
-                                    set=pkm_set['id']).distinct()
+                                       set=pkm_set['id']).distinct()
         pkm_set['owned_cards'] = len(cards)
         pkm_set['owned_cards_sr'] = len(cards_sr)
 
@@ -64,19 +64,36 @@ def set_detail_by_name(request, name):
 
 @api_view(['PUT'])
 @permission_classes((IsAdmin,))
-def create(request):
+def upsert(request):
     if not request.data:
         raise exceptions.ParseError('Missing body')
 
     data = request.data
 
-    set_validate = SetSerializer(data=data)
+    try:
+        pkm_set = Set.objects.get(name=data['name'])
+    except Set.DoesNotExist:
+        pkm_set = None
+
+    if pkm_set:
+        set_validate = SetSerializer(pkm_set, data, partial=True)
+    else:
+        set_validate = SetSerializer(data=data)
+
     set_validate.is_valid(raise_exception=True)
     pkm_set = set_validate.save()
 
     for card in data['cards']:
+        try:
+            card_db = Card.objects.get(set=pkm_set.id, number=card['number'])
+        except Card.DoesNotExist:
+            card_db = None
+
         card['set'] = pkm_set.id
-        card_validate = CardSerializer(data=card)
+        if card_db:
+            card_validate = CardSerializer(card_db, card, partial=True)
+        else:
+            card_validate = CardSerializer(data=card)
         card_validate.is_valid(raise_exception=True)
         card_validate.save()
 
