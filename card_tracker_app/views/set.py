@@ -78,6 +78,37 @@ def create(request):
 
 
 @api_view(['PUT'])
+@permission_classes((IsAdmin,))
+def upsert(request):
+    if not request.data:
+        raise exceptions.ParseError('Missing body')
+
+    data = request.data
+
+    pkm_set = Set.objects.get(name=data['name'])
+
+    if pkm_set:
+        set_validate = SetSerializer(pkm_set, data, partial=True)
+    else:
+        set_validate = SetSerializer(data=data)
+
+    set_validate.is_valid(raise_exception=True)
+    pkm_set = set_validate.save()
+
+    for card in data['cards']:
+        card_db = Card.objects.get(set=pkm_set.id, number=card['number'])
+        card['set'] = pkm_set.id
+        if card_db:
+            card_validate = CardSerializer(card_db, card, partial=True)
+        else:
+            card_validate = CardSerializer(data=card)
+        card_validate.is_valid(raise_exception=True)
+        card_validate.save()
+
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['PUT'])
 def action(request, set_id, card_number):
     if not request.data:
         raise exceptions.ParseError('Missing body')
