@@ -16,10 +16,10 @@ def set_overview(request):
     sets = SetSerializer(Set.objects.all(), many=True).data
 
     for pkm_set in sets:
-        cards = Card.objects.filter(~Q(rarity='Rare Secret'), card_card_owned__is_loan=False,
-                                    set=pkm_set['id']).distinct()
+        cards = Card.objects.filter(~Q(rarity='Rare Secret'), ~Q(rarity='Rare Rainbow'),
+                                    card_card_owned__is_loan=False, set=pkm_set['id']).distinct()
         cards_sr = Card.objects.filter(card_card_owned__is_loan=False,
-                                    set=pkm_set['id']).distinct()
+                                       set=pkm_set['id']).distinct()
         pkm_set['owned_cards'] = len(cards)
         pkm_set['owned_cards_sr'] = len(cards_sr)
 
@@ -70,7 +70,10 @@ def upsert(request):
 
     data = request.data
 
-    pkm_set = Set.objects.get(name=data['name'])
+    try:
+        pkm_set = Set.objects.get(name=data['name'])
+    except Set.DoesNotExist:
+        pkm_set = None
 
     if pkm_set:
         set_validate = SetSerializer(pkm_set, data, partial=True)
@@ -81,7 +84,11 @@ def upsert(request):
     pkm_set = set_validate.save()
 
     for card in data['cards']:
-        card_db = Card.objects.get(set=pkm_set.id, number=card['number'])
+        try:
+            card_db = Card.objects.get(set=pkm_set.id, number=card['number'])
+        except Card.DoesNotExist:
+            card_db = None
+
         card['set'] = pkm_set.id
         if card_db:
             card_validate = CardSerializer(card_db, card, partial=True)
