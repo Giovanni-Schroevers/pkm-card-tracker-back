@@ -2,7 +2,7 @@ from django.db import models
 from django.utils.timezone import now
 from django_enumfield import enum
 
-from . import Set, Card, User
+from . import Card, User
 
 
 class ActionTypes(enum.Enum):
