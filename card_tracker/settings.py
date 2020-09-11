@@ -8,14 +8,28 @@ load_dotenv(env_path)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '136^$k96yvojtf$un&7@$ar1+v(=v&z7h!$8@_23y_)=dg1e3a'
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 DEBUG = int(os.getenv("SERVER_DEBUG"))
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    os.getenv("ALLOWED_HOST")
+]
 
 # SECURITY WARNING: Change to whitelist when running in production
-CORS_ORIGIN_ALLOW_ALL = True
+CORS_ORIGIN_ALLOW_ALL = bool(int(os.getenv("SERVER_DEBUG")))
+
+SESSION_COOKIE_SECURE = bool(int(os.getenv("SESSION_COOKIE_SECURE")))
+SECURE_SSL_REDIRECT = bool(int(os.getenv("SECURE_SSL_REDIRECT")))
+CSRF_COOKIE_SECURE = bool(int(os.getenv("CSRF_COOKIE_SECURE")))
+X_FRAME_OPTIONS = os.getenv("X_FRAME_OPTIONS")
+SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS"))
+SECURE_BROWSER_XSS_FILTER = bool(int(os.getenv("SECURE_BROWSER_XSS_FILTER")))
+SECURE_CONTENT_TYPE_NOSNIFF = bool(int(os.getenv("SECURE_CONTENT_TYPE_NOSNIFF")))
+SECURE_HSTS_PRELOAD = bool(int(os.getenv("SECURE_HSTS_PRELOAD")))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = bool(int(os.getenv("SECURE_HSTS_INCLUDE_SUBDOMAINS")))
+
+# print(SECURE_SSL_REDIRECT)
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -44,10 +58,10 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
 ]
 
 ROOT_URLCONF = 'card_tracker.urls'
