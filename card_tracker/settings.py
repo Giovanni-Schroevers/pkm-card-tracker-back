@@ -13,7 +13,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = int(os.getenv("SERVER_DEBUG"))
 
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOST").split(",")
-
+CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS").split(",")
 
 # SECURITY WARNING: Change to whitelist when running in production
 CORS_ORIGIN_ALLOW_ALL = bool(int(os.getenv("CORS_ORIGIN_ALLOW_ALL")))
