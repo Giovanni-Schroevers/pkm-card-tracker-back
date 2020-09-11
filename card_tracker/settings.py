@@ -28,8 +28,6 @@ SECURE_CONTENT_TYPE_NOSNIFF = bool(int(os.getenv("SECURE_CONTENT_TYPE_NOSNIFF"))
 SECURE_HSTS_PRELOAD = bool(int(os.getenv("SECURE_HSTS_PRELOAD")))
 SECURE_HSTS_INCLUDE_SUBDOMAINS = bool(int(os.getenv("SECURE_HSTS_INCLUDE_SUBDOMAINS")))
 
-# print(SECURE_SSL_REDIRECT)
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
