@@ -12,12 +12,11 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 
 DEBUG = int(os.getenv("SERVER_DEBUG"))
 
-ALLOWED_HOSTS = [
-    os.getenv("ALLOWED_HOST")
-]
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOST").split(",")
+
 
 # SECURITY WARNING: Change to whitelist when running in production
-CORS_ORIGIN_ALLOW_ALL = bool(int(os.getenv("SERVER_DEBUG")))
+CORS_ORIGIN_ALLOW_ALL = bool(int(os.getenv("CORS_ORIGIN_ALLOW_ALL")))
 
 SESSION_COOKIE_SECURE = bool(int(os.getenv("SESSION_COOKIE_SECURE")))
 SECURE_SSL_REDIRECT = bool(int(os.getenv("SECURE_SSL_REDIRECT")))
