@@ -1,9 +1,11 @@
 from rest_framework import serializers
 
 from card_tracker_app.models import Card
+from card_tracker_app.serializers.comment import CommentSerializer
 
 
 class CardSerializer(serializers.ModelSerializer):
+    comments = CommentSerializer(many=True)
 
     class Meta:
         model = Card
@@ -12,11 +14,13 @@ class CardSerializer(serializers.ModelSerializer):
             'name',
             'number',
             'set',
-            'rarity'
+            'rarity',
+            'comments'
         )
 
 
 class CardInSetSerializer(serializers.ModelSerializer):
+    comments = CommentSerializer(many=True)
 
     class Meta:
         model = Card
@@ -25,6 +29,7 @@ class CardInSetSerializer(serializers.ModelSerializer):
             'name',
             'number',
             'rarity',
+            'comments'
         )
 
 

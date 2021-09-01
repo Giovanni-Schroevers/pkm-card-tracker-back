@@ -8,6 +8,7 @@ from card_tracker_app.permissions import IsAdmin
 from card_tracker_app.serializers.action import ActionSerializer
 from card_tracker_app.serializers.card import CardSerializer, CardInSetSerializer
 from card_tracker_app.serializers.card_owned import CardOwnedSerializer
+from card_tracker_app.serializers.comment import CommentSerializer, CommentSaveSerializer
 from card_tracker_app.serializers.set import SetSerializer
 
 
@@ -216,3 +217,25 @@ def card_detail(request, pk):
     data['loans'] = loans
 
     return Response(data, status=status.HTTP_200_OK)
+
+
+@api_view(['PUT'])
+def comment(request, pk):
+    try:
+        card = Card.objects.get(pk=pk)
+    except Card.DoesNotExist:
+        raise exceptions.NotFound(f"Card with id'{pk}' not found")
+
+    if 'text' not in request.data or not request.data['text']:
+        raise exceptions.ParseError("Missing parameter comment")
+
+    user = request.user
+    data = request.data
+    data['user'] = user.pk
+    data['card'] = card.pk
+
+    comment_serializer = CommentSaveSerializer(data=request.data)
+    comment_serializer.is_valid(raise_exception=True)
+    comment_data = comment_serializer.save()
+
+    return Response(CommentSerializer(comment_data).data, status=status.HTTP_201_CREATED)
