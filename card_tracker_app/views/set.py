@@ -23,6 +23,7 @@ def set_overview(request):
                                        set=pkm_set['id']).distinct()
         pkm_set['owned_cards'] = len(cards)
         pkm_set['owned_cards_sr'] = len(cards_sr)
+        del pkm_set['cards_per_row']
 
     return Response(sets, status=status.HTTP_200_OK)
 
@@ -99,6 +100,22 @@ def upsert(request):
         card_validate.save()
 
     return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['PATCH'])
+def set_cards_per_row(request, pk):
+    try:
+        pkm_set = Set.objects.get(pk=pk)
+    except Set.DoesNotExist:
+        raise exceptions.NotFound(f"Set with name '{pk}' does not exist")
+
+    if 'amount' not in request.data or not request.data['amount']:
+        raise exceptions.ParseError("Missing parameter amount")
+
+    pkm_set.cards_per_row = request.data['amount']
+    pkm_set.save()
+
+    return Response(SetSerializer(pkm_set).data, status.HTTP_200_OK)
 
 
 @api_view(['PUT'])

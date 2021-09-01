@@ -8,6 +8,7 @@ from card_tracker_app.serializers.card import CardSetOverviewSerializer
 
 class SetSerializer(serializers.ModelSerializer):
     cards = serializers.SerializerMethodField(read_only=True)
+    cards_per_row = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Set
