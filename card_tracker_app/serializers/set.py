@@ -7,7 +7,7 @@ from card_tracker_app.serializers.card import CardSetOverviewSerializer
 
 
 class SetSerializer(serializers.ModelSerializer):
-    cards = serializers.SerializerMethodField(read_only=True)
+    # cards = serializers.SerializerMethodField(read_only=True)
     cards_per_row = serializers.IntegerField(read_only=True)
 
     class Meta:
@@ -17,15 +17,15 @@ class SetSerializer(serializers.ModelSerializer):
             'code',
             'name',
             'cards_per_row',
-            'cards',
+            # 'cards',
         )
 
-    def get_cards(self, obj):
-        cards_owned = []
-        cards = CardSetOverviewSerializer(obj.cards, many=True)
-        for card in cards.data:
-            json_card = json.loads(json.dumps(card))
-            if json_card['total_cards'] > 0:
-                print(json_card)
-                cards_owned.append(json_card)
-        return cards_owned
+    # def get_cards(self, obj):
+    #     cards_owned = []
+    #     cards = CardSetOverviewSerializer(obj.cards, many=True)
+    #     for card in cards.data:
+    #         json_card = json.loads(json.dumps(card))
+    #         if json_card['total_cards'] > 0:
+    #             print(json_card)
+    #             cards_owned.append(json_card)
+    #     return cards_owned
