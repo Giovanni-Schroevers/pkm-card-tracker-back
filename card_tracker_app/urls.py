@@ -15,7 +15,7 @@ urlpatterns = [
     path('set/<int:pk>/', set_detail),
     path('set/<int:pk>/cards_per_row/', set_cards_per_row),
     path('set/<str:name>/', set_detail_by_name),
-    path('set/<int:set_id>/<str:card_number>/', action),
+    path('set/<int:set_id>/<str:card_id>/', action),
     path('card/<int:pk>/', card_detail),
     path('card/<int:pk>/comment/', comment)
 ]

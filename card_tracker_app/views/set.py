@@ -119,7 +119,7 @@ def set_cards_per_row(request, pk):
 
 
 @api_view(['PUT'])
-def action(request, set_id, card_number):
+def action(request, set_id, card_id):
     if not request.data:
         raise exceptions.ParseError('Missing body')
 
@@ -129,9 +129,9 @@ def action(request, set_id, card_number):
         raise exceptions.NotFound(f"Set with id '{set_id}' does not exist")
 
     try:
-        card = Card.objects.get(set=set_id, number=card_number)
+        card = Card.objects.get(set=set_id, id=card_id)
     except Card.DoesNotExist:
-        raise exceptions.NotFound(f"Card '{card_number}' does not exist in set '{pkm_set.name}'")
+        raise exceptions.NotFound(f"Card '{card_id}' does not exist in set '{pkm_set.name}'")
 
     if 'action' not in request.data:
         raise exceptions.ParseError('Missing parameter action')
@@ -141,13 +141,13 @@ def action(request, set_id, card_number):
 
     action_data = {'user': user.id, 'card': card.id}
 
-    if action_type == 'add':
+    if action_type == 'ADD':
         card_owned = CardOwnedSerializer(data=action_data)
         card_owned.is_valid()
         card_owned.save()
 
         action_data['action'] = 0
-    elif action_type == 'loan':
+    elif action_type == 'LOAN':
         total_cards = CardOwned.objects.filter(card=card.id, is_loan=False)
         loaned_cards = CardOwned.objects.filter(card=card.id, is_loan=True)
 
@@ -159,7 +159,7 @@ def action(request, set_id, card_number):
             card_owned.save()
         else:
             return Response({'detail': 'There are no cards to be loaned'}, status=status.HTTP_400_BAD_REQUEST)
-    elif action_type == 'return':
+    elif action_type == 'RETURN':
         loans = CardOwned.objects.filter(user=request.user.id, card=card.id, is_loan=True)
 
         if len(loans) == 0:
@@ -169,7 +169,7 @@ def action(request, set_id, card_number):
         CardOwned.delete(loans.last())
 
         action_data['action'] = 2
-    elif action_type == 'remove':
+    elif action_type == 'REMOVE':
         cards = CardOwned.objects.filter(user=request.user.id, card=card.id, is_loan=False)
 
         if len(cards) == 0:
