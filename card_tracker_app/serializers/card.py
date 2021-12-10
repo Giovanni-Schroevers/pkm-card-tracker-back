@@ -5,7 +5,7 @@ from card_tracker_app.serializers.comment import CommentSerializer
 
 
 class CardSerializer(serializers.ModelSerializer):
-    comments = CommentSerializer(many=True)
+    comments = CommentSerializer(many=True, required=False)
 
     class Meta:
         model = Card
@@ -20,7 +20,7 @@ class CardSerializer(serializers.ModelSerializer):
 
 
 class CardInSetSerializer(serializers.ModelSerializer):
-    comments = CommentSerializer(many=True)
+    comments = CommentSerializer(many=True, required=False)
 
     class Meta:
         model = Card
